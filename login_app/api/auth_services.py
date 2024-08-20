@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from login_app.utils.query_services import register_service, authenticate_user
 
-TOKEN_EXPIRATION = 30
+TOKEN_EXPIRATION = 3600
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 load_dotenv()
@@ -56,6 +56,7 @@ async def create_access_token(data: dict):
     secret_key = os.getenv('SECRET_KEY')
     algorithm = os.getenv('ALGORITHM')
     encode_jwt = jwt.encode(data_to_encode, secret_key, algorithm)
+    print(encode_jwt)
     return encode_jwt
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
