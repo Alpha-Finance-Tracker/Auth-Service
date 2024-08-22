@@ -21,11 +21,11 @@ async def register(email: str, password: str):
 async def logout(user:user_dependency):
     return await logout_user(user)
 
-@auth_router.put('/refresh')
+@auth_router.get('/refresh_access_token')
 async def refresh_access_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     return await refresh_access_token_service(credentials.credentials)
 
-@auth_router.put('/refresh')
+@auth_router.get('/refresh_refresh_token')
 async def refresh_refresh_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     return await refresh_refresh_token_service(credentials.credentials)
 
