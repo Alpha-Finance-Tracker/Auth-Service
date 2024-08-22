@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from login_app.utils.query_services import register_service, authenticate_user
 
 ACCESS_TOKEN_EXPIRATION = 15
-REFRESH_TOKEN_EXPIRATION = 14400
+REFRESH_TOKEN_EXPIRATION = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 load_dotenv()
@@ -63,7 +63,7 @@ async def create_access_token(data: dict):
 
 async def create_refresh_token():
     data = {}
-    expiration = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRATION)
+    expiration = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRATION)
     data.update({'exp': expiration, 'last_activity': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")})
     secret_key = os.getenv('SECRET_KEY')
     algorithm = os.getenv('ALGORITHM')
