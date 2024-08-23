@@ -2,7 +2,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm,HTTPBearer, HTTPAuthorizationCredentials
 
-from login_app.api.auth_services import get_current_user, register_user, login_user, logout_user, refresh_access_token_service,refresh_refresh_token_service
+from login_app.api.auth_services import get_current_user, register_user, login_user, logout_user, \
+    refresh_access_token_service, refresh_refresh_token_service, verify_access_token
 
 user_dependency = Annotated[dict,Depends(get_current_user)]
 security = HTTPBearer()
@@ -29,3 +30,6 @@ async def refresh_access_token(credentials: HTTPAuthorizationCredentials = Depen
 async def refresh_refresh_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     return await refresh_refresh_token_service(credentials.credentials)
 
+@auth_router.get('/verify_access_token')
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    return await verify_access_token(credentials.credentials)

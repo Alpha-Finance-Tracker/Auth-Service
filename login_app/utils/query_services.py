@@ -25,3 +25,6 @@ async def register_service(email, password):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
     return {"message": "User registered successfully!"}
+
+async def user_token_information(user_id):
+    return read_query('SELECT user_id,email,role FROM users WHERE user_id = %s',(user_id,))

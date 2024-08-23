@@ -3,17 +3,19 @@ from typing import Annotated
 from starlette import status
 from jose import jwt, JWTError
 from dotenv import load_dotenv
-from login_app.utils.responses import NotFound
+from login_app.utils.responses import NotFound, Unauthorized
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from login_app.utils.query_services import register_service, authenticate_user
+from login_app.utils.query_services import register_service, authenticate_user, user_token_information
 
 ACCESS_TOKEN_EXPIRATION = 15
 REFRESH_TOKEN_EXPIRATION = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 load_dotenv()
+secret_key = os.getenv('SECRET_KEY')
+algorithm = os.getenv('ALGORITHM')
 
 logged_users = {}
 
@@ -21,12 +23,9 @@ logged_users = {}
 async def login_user(email: str, password: str):
     user = await authenticate_user(email, password)
 
-    access_token = await create_access_token({'user_id': user[0][0],
-                                  'email': user[0][1],
-                                  'role': user[0][3]})
+    access_token = await create_access_token(user[0][0])
 
-    refresh_token = await create_refresh_token()
-
+    refresh_token = await create_refresh_token(user[0][0])
 
     logged_users.update({f"{user[0][0]}": {'Email': email}})
 
@@ -48,25 +47,24 @@ async def logout_user(user):
 
 
 async def register_user(email: str, password: str):
-    return await register_service(email,password)
+    return await register_service(email, password)
 
 
+async def create_access_token(user_id):
+    user = await user_token_information(user_id)
 
-async def create_access_token(data: dict):
-    data_to_encode = data.copy()
+    data_to_encode = {'user_id': user[0][0], 'email': user[0][1], 'role': user[0][2]}
     expiration = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRATION)
+
     data_to_encode.update({'exp': expiration, 'last_activity': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")})
-    secret_key = os.getenv('SECRET_KEY')
-    algorithm = os.getenv('ALGORITHM')
     encode_jwt = jwt.encode(data_to_encode, secret_key, algorithm)
     return encode_jwt
 
-async def create_refresh_token():
-    data = {}
+
+async def create_refresh_token(user_id):
+    data = {'user_id': user_id}
     expiration = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRATION)
     data.update({'exp': expiration, 'last_activity': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")})
-    secret_key = os.getenv('SECRET_KEY')
-    algorithm = os.getenv('ALGORITHM')
     encode_jwt = jwt.encode(data, secret_key, algorithm)
     return encode_jwt
 
@@ -79,8 +77,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     )
 
     try:
-        secret_key = os.getenv('SECRET_KEY')
-        algorithm = os.getenv('ALGORITHM')
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
         email = payload.get('email')
         user_id = payload.get('user_id')
@@ -101,28 +97,47 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         raise credentials_exception
 
 
-async def decode_token(token):
-    try:
-        secret_key = os.getenv('SECRET_KEY')
-        algorithm = os.getenv('ALGORITHM')
-        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-        return payload
-    except Exception as e:
-        print(f"Error decoding JWT: {e}")
-
-
 async def refresh_access_token_service(token):
+    refresh_token = await verify_refresh_token(token)
+    access_token = create_access_token(refresh_token['user_id'])
+    return {'token': access_token, 'refresh_token_validity': refresh_token['Validity']}
 
-    decoded_payload = await decode_token(token)
-    if decoded_payload:
-        return  await create_access_token(decoded_payload)
-    else:
-        raise ValueError("Invalid token")
 
 async def refresh_refresh_token_service(token):
-    decoded_payload = await decode_token(token)
-    if decoded_payload:
-        return await create_refresh_token()
-    else:
-        raise ValueError("Invalid token")
+    payload = await decode_refresh_token(token)
+    refresh_token = await create_refresh_token(payload.get('user_id'))
+    return refresh_token
 
+
+async def verify_access_token(token):
+    if not token:
+        return Unauthorized
+
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+        exp_time = datetime.fromtimestamp(payload.get('exp'))
+        if exp_time > datetime.now():
+            return token
+    except JWTError:
+        return Unauthorized
+
+
+async def verify_refresh_token(token):
+    if not token:
+        return Unauthorized
+
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+        exp_time = datetime.fromtimestamp(payload.get('exp'))
+        time_remaining = exp_time - datetime.now()
+        if time_remaining.total_seconds() > 172800:  # 2 days in seconds
+            return {'Validity': 'Valid', 'token': token, 'user_id': payload.get('user_id')}
+        else:
+            return {'Validity': 'Expires', 'token': token, 'user_id': payload.get('user_id')}
+    except JWTError:
+        return Unauthorized
+
+
+async def decode_refresh_token(token):
+    payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+    return payload
