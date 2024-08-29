@@ -1,13 +1,17 @@
 import os
 from typing import Annotated
+
+import bcrypt
 from starlette import status
 from jose import jwt, JWTError
 from dotenv import load_dotenv
-from login_app.utils.responses import NotFound, Unauthorized
+
+from login_app.database import read_query, update_query
+from login_app.utils.responses import NotFound, Unauthorized, EmailExists
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from login_app.utils.query_services import register_service, authenticate_user, user_token_information
+
 
 ACCESS_TOKEN_EXPIRATION = 15
 REFRESH_TOKEN_EXPIRATION = 30
@@ -58,6 +62,7 @@ async def create_access_token(user_id):
 
     data_to_encode.update({'exp': expiration, 'last_activity': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")})
     encode_jwt = jwt.encode(data_to_encode, secret_key, algorithm)
+    print(encode_jwt)
     return encode_jwt
 
 
@@ -98,9 +103,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 async def refresh_access_token_service(token):
-    refresh_token = await verify_refresh_token(token)
-    access_token = create_access_token(refresh_token['user_id'])
-    return {'token': access_token, 'refresh_token_validity': refresh_token['Validity']}
+    refresh_token = await verify_refresh_token_service(token)
+    access_token =  await create_access_token(refresh_token['user_id'])
+    return {'token': access_token, 'Validity': refresh_token['Validity']} # The validity of the refresh token
 
 
 async def refresh_refresh_token_service(token):
@@ -109,9 +114,9 @@ async def refresh_refresh_token_service(token):
     return refresh_token
 
 
-async def verify_access_token(token):
+async def verify_access_token_service(token):
     if not token:
-        return Unauthorized
+        raise Unauthorized
 
     try:
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
@@ -119,12 +124,12 @@ async def verify_access_token(token):
         if exp_time > datetime.now():
             return token
     except JWTError:
-        return Unauthorized
+        raise Unauthorized
 
 
-async def verify_refresh_token(token):
+async def verify_refresh_token_service(token):
     if not token:
-        return Unauthorized
+        raise Unauthorized
 
     try:
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
@@ -135,9 +140,35 @@ async def verify_refresh_token(token):
         else:
             return {'Validity': 'Expires', 'token': token, 'user_id': payload.get('user_id')}
     except JWTError:
-        return Unauthorized
+        raise Unauthorized
 
 
 async def decode_refresh_token(token):
     payload = jwt.decode(token, secret_key, algorithms=[algorithm])
     return payload
+
+
+async def authenticate_user(email: str, password: str):
+    user_info = read_query('SELECT * FROM users WHERE email = %s', (email,))
+
+    if not user_info:
+        raise NotFound
+
+    if bcrypt.checkpw(password.encode('utf-8'), user_info[0][2].encode('utf-8')):
+        return user_info
+    else:
+        raise NotFound
+
+
+async def register_service(email, password):
+    info = read_query('SELECT * FROM users WHERE email = %s', (email,))
+    if info != []:
+        raise EmailExists
+
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
+    return {"message": "User registered successfully!"}
+
+async def user_token_information(user_id):
+    return read_query('SELECT user_id,email,role FROM users WHERE user_id = %s',(user_id,))
