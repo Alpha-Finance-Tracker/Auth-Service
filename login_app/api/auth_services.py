@@ -2,7 +2,7 @@ import os
 from typing import Annotated
 
 import bcrypt
-from starlette import status
+from fastapi import status
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 
@@ -12,11 +12,10 @@ from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
-
 ACCESS_TOKEN_EXPIRATION = 15
 REFRESH_TOKEN_EXPIRATION = 30
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
 load_dotenv()
 secret_key = os.getenv('SECRET_KEY')
 algorithm = os.getenv('ALGORITHM')
@@ -51,27 +50,30 @@ async def logout_user(user):
 
 
 async def register_user(email: str, password: str):
-    return await register_service(email, password)
+    info = await read_query('SELECT * FROM users WHERE email = %s', (email,))
+    if info:
+        raise EmailExists()
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    await update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
+    return {"message": "User registered successfully!"}
 
 
 async def create_access_token(user_id):
-    user = await user_token_information(user_id)
-
-    data_to_encode = {'user_id': user[0][0], 'email': user[0][1], 'role': user[0][2]}
+    user = await read_query('SELECT user_id,email,role FROM users WHERE user_id = %s', (user_id,))
     expiration = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRATION)
 
-    data_to_encode.update({'exp': expiration, 'last_activity': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")})
+    data_to_encode = {'user_id': user[0][0], 'email': user[0][1], 'role': user[0][2], 'exp': expiration}
     encode_jwt = jwt.encode(data_to_encode, secret_key, algorithm)
     print(encode_jwt)
     return encode_jwt
 
 
 async def create_refresh_token(user_id):
-    data = {'user_id': user_id}
     expiration = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRATION)
-    data.update({'exp': expiration, 'last_activity': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")})
-    encode_jwt = jwt.encode(data, secret_key, algorithm)
-    return encode_jwt
+    data = {'user_id': user_id, 'exp': expiration}
+
+    return jwt.encode(data, secret_key, algorithm)
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -104,13 +106,15 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 async def refresh_access_token_service(token):
     refresh_token = await verify_refresh_token_service(token)
-    access_token =  await create_access_token(refresh_token['user_id'])
-    return {'token': access_token, 'Validity': refresh_token['Validity']} # The validity of the refresh token
+    access_token = await create_access_token(refresh_token['user_id'])
+
+    return {'token': access_token, 'Validity': refresh_token['Validity']}  # The validity of the refresh token
 
 
 async def refresh_refresh_token_service(token):
-    payload = await decode_refresh_token(token)
+    payload = jwt.decode(token, secret_key, algorithms=[algorithm])
     refresh_token = await create_refresh_token(payload.get('user_id'))
+
     return refresh_token
 
 
@@ -143,13 +147,8 @@ async def verify_refresh_token_service(token):
         raise Unauthorized
 
 
-async def decode_refresh_token(token):
-    payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-    return payload
-
-
 async def authenticate_user(email: str, password: str):
-    user_info = read_query('SELECT * FROM users WHERE email = %s', (email,))
+    user_info = await read_query('SELECT * FROM users WHERE email = %s', (email,))
 
     if not user_info:
         raise NotFound
@@ -158,17 +157,3 @@ async def authenticate_user(email: str, password: str):
         return user_info
     else:
         raise NotFound
-
-
-async def register_service(email, password):
-    info = read_query('SELECT * FROM users WHERE email = %s', (email,))
-    if info != []:
-        raise EmailExists
-
-
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
-    return {"message": "User registered successfully!"}
-
-async def user_token_information(user_id):
-    return read_query('SELECT user_id,email,role FROM users WHERE user_id = %s',(user_id,))
