@@ -32,6 +32,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: List directory contents
+        run: |
+          ls -la
+          ls -la login_app
+
       - name: Run unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}/login_app
