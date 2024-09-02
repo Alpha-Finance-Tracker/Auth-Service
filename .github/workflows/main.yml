@@ -34,11 +34,11 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest tests/unit_tests/test_auth_services.py
+          pytest tests/unit_tests
 
       - name: Run integration tests
         run: |
-          pytest tests/integration_tests/test_auth_router.py
+          pytest tests/integration_tests
       - name: List directory contents
         run: |
           ls -la
