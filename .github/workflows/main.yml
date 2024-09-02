@@ -32,22 +32,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: List root directory contents
-        run: dir
-
-      - name: List contents of login_app
-        run: dir login_app
-
-      - name: Set PYTHONPATH and run unit tests
+      - name: Set PYTHONPATH and list directory contents
         env:
-          PYTHONPATH: ${{ github.workspace }}/login_app
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "PYTHONPATH is set to %PYTHONPATH%"
-          pytest tests/unit_tests/test_auth_services.py
+          dir
+          dir login_app
 
-      - name: Set PYTHONPATH and run integration tests
+      - name: Run unit tests
         env:
-          PYTHONPATH: ${{ github.workspace }}/login_app
+          PYTHONPATH: ${{ github.workspace }}
         run: |
-          echo "PYTHONPATH is set to %PYTHONPATH%"
-          pytest tests/integration_tests/test_auth_router.py
+          python -m pytest tests/unit_tests/test_auth_services.py
+
+      - name: Run integration tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest tests/integration_tests/test_auth_router.py
