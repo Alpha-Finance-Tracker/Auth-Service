@@ -52,7 +52,7 @@ async def logout_user(user):
 async def register_user(email: str, password: str):
     info = await read_query('SELECT * FROM users WHERE email = %s', (email,))
     if info:
-        raise EmailExists()
+        raise EmailExists
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     await update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
@@ -157,3 +157,6 @@ async def authenticate_user(email: str, password: str):
         return user_info
     else:
         raise NotFound
+
+
+
