@@ -38,5 +38,5 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest tests/unit_tests/test_auth_services.py
-          pytest tests/integration_test/test_auth_router.py
+          pytest tests/unit_tests/test_auth_services
+          pytest tests/integration_test/test_auth_router
