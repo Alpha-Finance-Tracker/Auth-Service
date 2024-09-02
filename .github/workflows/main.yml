@@ -33,13 +33,13 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run unit tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/login_app
         run: |
-          pytest tests/unit_tests
+          pytest tests/unit_tests/test_auth_services.py
 
       - name: Run integration tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/login_app
         run: |
-          pytest tests/integration_tests
-      - name: List directory contents
-        run: |
-          ls -la
-          ls -la login_app
+          pytest tests/integration_tests/test_auth_router.py
