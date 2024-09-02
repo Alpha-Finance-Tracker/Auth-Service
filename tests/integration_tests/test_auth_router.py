@@ -23,6 +23,8 @@ async def test_unsuccessful_login_flow(mocker):
 async def test_successful_login_flow(mocker):
     mocker.patch(f'login_app.api.auth_services.read_query',mocker.AsyncMock(return_value=mock_user_db_information))
     mocker.patch('login_app.api.auth_services.bcrypt.checkpw',mocker.MagicMock(return_value=True))
+    mocker.patch('login_app.api.auth_services.create_access_token',mocker.AsyncMock(return_value=mock_token))
+    mocker.patch('login_app.api.auth_services.create_refresh_token',mocker.AsyncMock(return_value=mock_token))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/login',data=auth_data)
