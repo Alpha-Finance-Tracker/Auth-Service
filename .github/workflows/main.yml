@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest  # Changed from windows-latest to ubuntu-latest for compatibility with Codecov
+          - ubuntu-latest
         python-version:
           - "3.12"
     name: Test
@@ -40,33 +40,16 @@ jobs:
 
       - name: Install Coverage Tools
         run: |
-          pip install coverage  # Install coverage tool for reporting
-          pip install codecov  # Install Codecov uploader
+          pip install coverage
+          pip install codecov
 
-      - name: Set PYTHONPATH and list directory contents
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo "PYTHONPATH is set to %PYTHONPATH%"
-          ls -la
-          ls -la login_app
-
-      - name: Run unit tests with coverage
-        env:
-          PYTHONPATH: ${{ github.workspace }}
+      - name: Run Tests with Coverage
         run: |
           coverage run -m pytest tests/unit_tests/test_auth_services.py
-          coverage report  # Display coverage report in the logs
+          coverage run --append -m pytest tests/integration_tests/test_auth_router.py
+          coverage xml  # Generate the coverage report
 
-      - name: Run integration tests with coverage
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          coverage run -m pytest tests/integration_tests/test_auth_router.py
-          coverage report  # Display coverage report in the logs
-
-      - name: Upload coverage to Codecov
+      - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          files: coverage.xml  # Specify the coverage report file (ensure you generate it)
-          token: ${{ secrets.CODECOV_TOKEN }}  # Optional: Provide Codecov token if needed
+          files: coverage.xml  # Path to the coverage report
