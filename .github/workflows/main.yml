@@ -43,17 +43,13 @@ jobs:
           pip install coverage
           pip install codecov
 
-      - name: Run unit tests with coverage
+      - name: Run Tests with Coverage
         run: |
           coverage run -m pytest tests/unit_tests/test_auth_services.py
-          coverage xml  # Generate the coverage report
-
-      - name: Run integration tests with coverage
-        run: |
           coverage run -m pytest tests/integration_tests/test_auth_router.py
           coverage xml  # Generate the coverage report
 
-      - name: Upload coverage to Codecov
+      - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           files: coverage.xml  # Path to the coverage report
