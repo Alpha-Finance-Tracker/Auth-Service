@@ -30,5 +30,3 @@ async def update_query(sql: str, sql_params=()):
     cursor.execute(sql, sql_params)
     mydb.commit()
     return "success"
-
-

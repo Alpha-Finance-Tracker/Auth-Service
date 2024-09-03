@@ -23,6 +23,16 @@ algorithm = os.getenv('ALGORITHM')
 logged_users = {}
 
 
+async def register_user(email: str, password: str):
+    info = await read_query('SELECT * FROM users WHERE email = %s', (email,))
+    if info:
+        raise EmailExists
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    await update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
+    return {"message": "User registered successfully!"}
+
+
 async def login_user(email: str, password: str):
     user = await authenticate_user(email, password)
 
@@ -47,16 +57,6 @@ async def logout_user(user):
         return {'message': 'Successfully logged out.'}
     else:
         raise NotFound
-
-
-async def register_user(email: str, password: str):
-    info = await read_query('SELECT * FROM users WHERE email = %s', (email,))
-    if info:
-        raise EmailExists
-
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    await update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (email, hashed_password))
-    return {"message": "User registered successfully!"}
 
 
 async def create_access_token(user_id):
@@ -112,8 +112,12 @@ async def refresh_access_token_service(token):
 
 
 async def refresh_refresh_token_service(token):
-    payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-    refresh_token = await create_refresh_token(payload.get('user_id'))
+    try:
+        await verify_refresh_token_service(token)
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+        refresh_token = await create_refresh_token(payload.get('user_id'))
+    except Exception as e:
+        raise e
 
     return refresh_token
 
@@ -157,6 +161,3 @@ async def authenticate_user(email: str, password: str):
         return user_info
     else:
         raise NotFound
-
-
-

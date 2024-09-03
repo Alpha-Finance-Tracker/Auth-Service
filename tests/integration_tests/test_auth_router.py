@@ -3,95 +3,134 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 
 from login_app.api.auth_router import auth_router
-from tests.mocked_data import auth_data, mock_user_db_information, registration_data, mock_payload, mock_token, \
-    expiring_refresh_token_payload
+from tests.mocked_data import *
 
 app = FastAPI()
 app.include_router(auth_router)
 
 
 @pytest.mark.asyncio
-async def test_unsuccessful_login_flow(mocker):
-    mocker.patch('login_app.api.auth_services.read_query',mocker.AsyncMock(return_value=None))
-
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        response = await client.post('/login',data=auth_data)
-
-        assert response.status_code == 404
-
-@pytest.mark.asyncio
-async def test_successful_login_flow(mocker):
-    mocker.patch(f'login_app.api.auth_services.read_query',mocker.AsyncMock(return_value=mock_user_db_information))
-    mocker.patch('login_app.api.auth_services.bcrypt.checkpw',mocker.MagicMock(return_value=True))
-    mocker.patch('login_app.api.auth_services.create_access_token',mocker.AsyncMock(return_value=mock_token))
-    mocker.patch('login_app.api.auth_services.create_refresh_token',mocker.AsyncMock(return_value=mock_token))
-
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        response = await client.post('/login',data=auth_data)
-
-        assert response.status_code == 200
-
-@pytest.mark.asyncio
 async def test_unsuccessful_registration_flow(mocker):
-    mocker.patch('login_app.api.auth_services.read_query',mocker.AsyncMock(return_value=mock_user_db_information))
 
-    async with AsyncClient(app=app,base_url="http://testserver") as client:
-        response = await client.post('/register',params=registration_data)
+    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=True))
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.post('/register', params=mock_registration)
 
         assert response.status_code == 409
 
+
 @pytest.mark.asyncio
 async def test_successful_registration_flow(mocker):
-    mocker.patch('login_app.api.auth_services.read_query',mocker.AsyncMock(return_value=None))
+
+    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=None))
     mocker.patch('login_app.api.auth_services.bcrypt.hashpw')
     mocker.patch('login_app.api.auth_services.update_query')
 
-
-    async with AsyncClient(app=app,base_url="http://testserver") as client:
-        response = await client.post('/register',params=registration_data)
-
-        assert response.status_code == 200
-
-@pytest.mark.asyncio
-async def test_unsuccessful_access_token_refresh():
-    async with AsyncClient(app=app,base_url="http://testserver") as client:
-        response = await client.post('/refresh_access_token',headers={'Authorization': f'Bearer {mock_token}'})
-
-        assert response.status_code == 405
-
-
-@pytest.mark.asyncio
-async def test_successful_access_token_refresh(mocker):
-    mocker.patch('login_app.api.auth_services.verify_refresh_token_service',mocker.AsyncMock(return_value=mock_payload))
-    mocker.patch('login_app.api.auth_services.create_access_token',mocker.AsyncMock(return_value=mock_payload))
-
-    async with AsyncClient(app=app,base_url="http://testserver") as client:
-        response = await client.get('/refresh_access_token',headers={'Authorization': f'Bearer {mock_token}'})
-
-        assert response.status_code == 200
-
-@pytest.mark.asyncio
-async def test_invalid_access_token_validation():
     async with AsyncClient(app=app, base_url="http://testserver") as client:
-        response = await client.get('/verify_access_token', headers={'Authorization': f'Bearer {mock_token}'})
+        response = await client.post('/register', params=mock_registration)
+
+        assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_unsuccessful_login_flow(mocker):
+
+    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=None))
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.post('/login', data=mock_login)
+
+        assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_successful_login_flow(mocker):
+
+    mocker.patch(f'login_app.api.auth_services.read_query',
+                 mocker.AsyncMock(return_value=mock_authentication_db_user_info))
+
+    mocker.patch('login_app.api.auth_services.bcrypt.checkpw', mocker.MagicMock(return_value=True))
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.post('/login', data=mock_login)
+
+        assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_unsuccessful_access_token_refresh_flow():
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get('/refresh_access_token', headers={'Authorization': f'Bearer {invalid_token}'})
 
         assert response.status_code == 401
 
+
 @pytest.mark.asyncio
-async def test_valid_access_token_validation(mocker):
-    mocker.patch('login_app.api.auth_services.jwt.decode',mocker.MagicMock(return_value=mock_payload))
+async def test_successful_access_token_refresh_flow(mocker):
+
+    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=mock_token_user_info))
+
     async with AsyncClient(app=app, base_url="http://testserver") as client:
-        response = await client.get('/verify_access_token', headers={'Authorization': f'Bearer {mock_token}'})
+        response = await client.get('/refresh_access_token',
+                                    headers={'Authorization': f'Bearer {valid_mock_refresh_token}'})
 
         assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_expiring_refresh_token_validation(mocker):
-    mocker.patch('login_app.api.auth_services.jwt.decode', mocker.MagicMock(return_value=expiring_refresh_token_payload))
+async def test_unsuccessful_refresh_token_refreshment_flow():
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
-        response = await client.get('/verify_refresh_token', headers={'Authorization': f'Bearer {mock_token}'})
+        response = await client.get('refresh_refresh_token', headers={'Authorization': f'Bearer {invalid_token}'})
+
+        assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_successful_refresh_token_refreshment_flow():
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get('refresh_refresh_token',
+                                    headers={'Authorization': f'Bearer {valid_mock_refresh_token}'})
 
         assert response.status_code == 200
 
+
+@pytest.mark.asyncio
+async def test_verify_access_token_when_invalid_flow():
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get('/verify_access_token', headers={'Authorization': f'Bearer {invalid_token}'})
+
+        assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_verify_access_token_when_valid_flow():
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get('/verify_access_token',
+                                    headers={'Authorization': f'Bearer {valid_mock_access_token}'})
+
+        assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_verify_refresh_token_when_invalid_flow():
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get('/verify_refresh_token', headers={'Authorization': f'Bearer {invalid_token}'})
+
+        assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_verify_refresh_token_when_valid_flow():
+
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get('/verify_refresh_token',
+                                    headers={'Authorization': f'Bearer {valid_mock_refresh_token}'})
+
+        assert response.status_code == 200
