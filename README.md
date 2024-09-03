@@ -5,7 +5,4 @@
 ![Dependencies](https://img.shields.io/david/username/repository)
 ![License](https://img.shields.io/github/license/username/repository)
 ![Downloads](https://img.shields.io/npm/dt/your-package-name)
-![Issues](https://img.shields.io/github/issues/username/repository)
-![Pull Requests](https://img.shields.io/github/issues-pr/username/repository)
-![Contributors](https://img.shields.io/github/contributors/username/repository)
 ![Last Commit](https://img.shields.io/github/last-commit/username/repository)
