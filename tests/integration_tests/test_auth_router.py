@@ -2,7 +2,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from login_app.api.auth_router import auth_router
+from login_app.api.routers.auth_router import auth_router
 from tests.mocked_data import *
 
 app = FastAPI()
@@ -12,7 +12,7 @@ app.include_router(auth_router)
 @pytest.mark.asyncio
 async def test_unsuccessful_registration_flow(mocker):
 
-    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=True))
+    mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=True))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/register', params=mock_registration)
@@ -23,9 +23,9 @@ async def test_unsuccessful_registration_flow(mocker):
 @pytest.mark.asyncio
 async def test_successful_registration_flow(mocker):
 
-    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=None))
-    mocker.patch('login_app.api.auth_services.bcrypt.hashpw')
-    mocker.patch('login_app.api.auth_services.update_query')
+    mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=None))
+    mocker.patch('login_app.models.user.bcrypt.hashpw')
+    mocker.patch('login_app.models.user.update_query')
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/register', params=mock_registration)
@@ -36,7 +36,7 @@ async def test_successful_registration_flow(mocker):
 @pytest.mark.asyncio
 async def test_unsuccessful_login_flow(mocker):
 
-    mocker.patch('login_app.api.auth_services.read_query', mocker.AsyncMock(return_value=None))
+    mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=None))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/login', data=mock_login)
