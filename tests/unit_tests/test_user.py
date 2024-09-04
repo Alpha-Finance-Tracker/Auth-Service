@@ -1,10 +1,8 @@
-
 import pytest
 
 from login_app.models.user import User
 from login_app.utils.responses import *
 from tests.mocked_data import *
-
 
 
 @pytest.mark.asyncio
@@ -33,10 +31,10 @@ async def test_authenticate_user_when_password_is_correct(mocker):
     mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=mock_authentication_db_user_info))
     mocker.patch('login_app.models.user.bcrypt.checkpw', mocker.MagicMock(return_value=True))
 
-
     result = await User(mock_login['username'], mock_login['password']).authenticate()
 
     assert result == 1
+
 
 @pytest.mark.asyncio
 async def test_register_user_when_email_already_exists(mocker):

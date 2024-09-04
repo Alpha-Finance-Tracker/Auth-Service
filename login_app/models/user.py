@@ -8,7 +8,7 @@ from login_app.utils.responses import NotFound, EmailExists
 
 class User:
 
-    def __init__(self,email,password):
+    def __init__(self, email, password):
         self.email = email
         self.password = password
 
@@ -32,7 +32,6 @@ class User:
         await update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (self.email, hashed_password))
         return {"message": "User registered successfully!"}
 
-
     async def login(self):
         user_id = await self.authenticate()
 
@@ -42,4 +41,4 @@ class User:
         return {
             "access_token": access_token,
             'refresh_token': refresh_token,
-            "token_type": "bearer",}
+            "token_type": "bearer", }

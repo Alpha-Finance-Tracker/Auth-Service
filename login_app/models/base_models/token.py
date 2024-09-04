@@ -18,6 +18,3 @@ class Token(ABC):
     @abstractmethod
     def create(self):
         raise NotImplementedError
-
-
-

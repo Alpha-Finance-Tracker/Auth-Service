@@ -11,7 +11,6 @@ app.include_router(auth_router)
 
 @pytest.mark.asyncio
 async def test_unsuccessful_registration_flow(mocker):
-
     mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=True))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
@@ -22,7 +21,6 @@ async def test_unsuccessful_registration_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_successful_registration_flow(mocker):
-
     mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=None))
     mocker.patch('login_app.models.user.bcrypt.hashpw')
     mocker.patch('login_app.models.user.update_query')
@@ -35,7 +33,6 @@ async def test_successful_registration_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_unsuccessful_login_flow(mocker):
-
     mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=None))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
@@ -46,12 +43,11 @@ async def test_unsuccessful_login_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_successful_login_flow(mocker):
-
     mocker.patch(f'login_app.models.user.read_query',
                  mocker.AsyncMock(return_value=mock_authentication_db_user_info))
 
     mocker.patch('login_app.models.user.bcrypt.checkpw', mocker.MagicMock(return_value=True))
-    mocker.patch('login_app.models.access_token.read_query',mocker.AsyncMock(return_value = mock_token_user_info))
+    mocker.patch('login_app.models.access_token.read_query', mocker.AsyncMock(return_value=mock_token_user_info))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/login', data=mock_login)
@@ -61,7 +57,6 @@ async def test_successful_login_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_unsuccessful_access_token_refresh_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('/refresh_access_token', headers={'Authorization': f'Bearer {invalid_token}'})
 
@@ -70,7 +65,6 @@ async def test_unsuccessful_access_token_refresh_flow():
 
 @pytest.mark.asyncio
 async def test_successful_access_token_refresh_flow(mocker):
-
     mocker.patch('login_app.models.access_token.read_query', mocker.AsyncMock(return_value=mock_token_user_info))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
@@ -82,7 +76,6 @@ async def test_successful_access_token_refresh_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_unsuccessful_refresh_token_refreshment_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('refresh_refresh_token', headers={'Authorization': f'Bearer {invalid_token}'})
 
@@ -91,7 +84,6 @@ async def test_unsuccessful_refresh_token_refreshment_flow():
 
 @pytest.mark.asyncio
 async def test_successful_refresh_token_refreshment_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('refresh_refresh_token',
                                     headers={'Authorization': f'Bearer {valid_mock_refresh_token}'})
@@ -101,7 +93,6 @@ async def test_successful_refresh_token_refreshment_flow():
 
 @pytest.mark.asyncio
 async def test_verify_access_token_when_invalid_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('/verify_access_token', headers={'Authorization': f'Bearer {invalid_token}'})
 
@@ -110,7 +101,6 @@ async def test_verify_access_token_when_invalid_flow():
 
 @pytest.mark.asyncio
 async def test_verify_access_token_when_valid_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('/verify_access_token',
                                     headers={'Authorization': f'Bearer {valid_mock_access_token}'})
@@ -120,7 +110,6 @@ async def test_verify_access_token_when_valid_flow():
 
 @pytest.mark.asyncio
 async def test_verify_refresh_token_when_invalid_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('/verify_refresh_token', headers={'Authorization': f'Bearer {invalid_token}'})
 
@@ -129,7 +118,6 @@ async def test_verify_refresh_token_when_invalid_flow():
 
 @pytest.mark.asyncio
 async def test_verify_refresh_token_when_valid_flow():
-
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('/verify_refresh_token',
                                     headers={'Authorization': f'Bearer {valid_mock_refresh_token}'})
