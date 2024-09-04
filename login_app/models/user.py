@@ -1,6 +1,8 @@
 import bcrypt
 
 from login_app.database import read_query, update_query
+from login_app.models.access_token import AccessToken
+from login_app.models.refresh_token import RefreshToken
 from login_app.utils.responses import NotFound, EmailExists
 
 
@@ -30,3 +32,14 @@ class User:
         await update_query('INSERT INTO users(email,password) VALUES(%s, %s)', (self.email, hashed_password))
         return {"message": "User registered successfully!"}
 
+
+    async def login(self):
+        user_id = await self.authenticate()
+
+        access_token = await AccessToken(token=None, user_id=user_id).create()
+        refresh_token = await RefreshToken(token=None, user_id=user_id).create()
+
+        return {
+            "access_token": access_token,
+            'refresh_token': refresh_token,
+            "token_type": "bearer",}

@@ -50,10 +50,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python -m pytest tests/unit_tests/test_auth_services.py
+          python -m pytest tests/unit_tests
 
       - name: Run integration tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python -m pytest tests/integration_tests/test_auth_router.py
+          python -m pytest tests/integration_tests

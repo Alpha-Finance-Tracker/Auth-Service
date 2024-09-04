@@ -10,16 +10,7 @@ class AuthService:
         self.password = password
 
     async def login(self):
-        user_id = await User(self.email,self.password).authenticate()
-
-        access_token = await AccessToken(token=None,user_id=user_id).create()
-        refresh_token = await RefreshToken(token=None,user_id=user_id).create()
-
-        return {
-            "access_token": access_token,
-            'refresh_token': refresh_token,
-            "token_type": "bearer",
-        }
+        return await User(self.email,self.password).login()
 
     async def register(self):
         return await User(self.email,self.password).register()
