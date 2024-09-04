@@ -34,7 +34,7 @@ To set up this FastAPI service, follow these steps:
     ```bash
       uvicorn main:app --reload
 
-Run with docker is also an option.
+Build with docker.
   ```bash
     docker build -t auth_app .
   
