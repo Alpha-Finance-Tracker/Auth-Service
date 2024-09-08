@@ -8,7 +8,7 @@
 
 # FastAPI Authentication Service
 
-This FastAPI service provides endpoints for  login, registration, token management, and verification.
+This FastAPI service is a part of a microservices based project. It provides endpoints for  login, registration, token management, and verification.
 
 ## Features
 
