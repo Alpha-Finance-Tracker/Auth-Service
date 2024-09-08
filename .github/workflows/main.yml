@@ -44,6 +44,9 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "PYTHONPATH is set to $PYTHONPATH"
+          dir
+          dir login_app
+
       - name: Run unit tests with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -60,3 +63,4 @@ jobs:
         run: coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          COVERALLS_SERVICE_NAME: github-actions
