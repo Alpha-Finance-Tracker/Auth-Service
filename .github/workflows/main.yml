@@ -23,7 +23,6 @@ jobs:
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       ALGORITHM: ${{ secrets.ALGORITHM }}
-      PYTHONPATH: ${{ github.workspace }}/login_app
 
     steps:
       - name: Checkout code
@@ -39,12 +38,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Tests and Generate Coverage Report
-        run: |
-          pytest --cov=login_app --cov-report=lcov
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      - name: Upload Coverage Report
-        uses: coverallsapp/github-action@v2
-        with:
-          file: tests/coverage.lcov
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run tests
+        run: |
+          pytest --cov=login_app --cov-report=lcov --cov-report=term
