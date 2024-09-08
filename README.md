@@ -29,13 +29,13 @@ To set up this FastAPI service, follow these steps:
 
 2. **Install the dependencies:**
    ```bash
-     pip install -r requirements.txt
+   pip install -r requirements.txt
 
 3. **Run the application:**
     ```bash
-      uvicorn main:app --reload
+    uvicorn main:app --reload
 
 Build with docker:
   ```bash
-    docker build -t auth_app .
+  docker build -t auth_app .
   
