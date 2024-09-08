@@ -38,12 +38,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set PYTHONPATH and list directory contents
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo "PYTHONPATH is set to $PYTHONPATH"
-          ls -la
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       - name: Run Tests and Generate Coverage Report
         run: |
@@ -54,4 +50,5 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }} 
           file: coverage.lcov
