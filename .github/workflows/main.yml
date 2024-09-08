@@ -37,13 +37,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov coveralls
+          pip install python-coveralls
 
       - name: Set PYTHONPATH and list directory contents
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "PYTHONPATH is set to $PYTHONPATH"
+          dir
+          dir login_app
+
       - name: Run unit tests with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -57,6 +60,7 @@ jobs:
           python -m pytest --cov=login_app --cov-append --cov-report=term tests/integration_tests
 
       - name: Submit coverage to Coveralls
-        run: coveralls
+        run: |
+          coveralls --service=github-actions
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
