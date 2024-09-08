@@ -23,6 +23,7 @@ jobs:
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       ALGORITHM: ${{ secrets.ALGORITHM }}
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -38,21 +39,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run unit tests with coverage
-        env:
-          PYTHONPATH: ${{ github.workspace }}
+      - name: Run unit tests
         run: |
-          python -m pytest --cov=login_app --cov-report=xml --cov-report=term tests/unit_tests
-
-      - name: Run integration tests with coverage
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest --cov=login_app --cov-append --cov-report=term tests/integration_tests
+          python -m pytest --cov=login_app --cov-report=xml
 
       - name: Submit coverage to Coveralls
         run: |
-          coveralls
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-          COVERALLS_SERVICE_NAME: github-actions
+          coveralls --service=github-actions
