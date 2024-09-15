@@ -13,7 +13,10 @@ class User:
         self.password = password
 
     async def authenticate(self):
-        user_info = await read_query('SELECT * FROM users WHERE email = %s', (self.email,))
+        sql = 'SELECT * FROM users WHERE email = :email'
+        params = {'email': self.email}
+
+        user_info = await read_query(sql,params)
 
         if not user_info:
             raise NotFound
