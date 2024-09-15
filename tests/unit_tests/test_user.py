@@ -1,6 +1,6 @@
 import pytest
 
-from login_app.models.user import User
+
 from login_app.utils.responses import *
 from tests.mocked_data import *
 

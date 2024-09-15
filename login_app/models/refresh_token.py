@@ -15,29 +15,28 @@ algorithm = os.getenv('ALGORITHM')
 class RefreshToken(Token):
     REFRESH_TOKEN_EXPIRATION = 30  # Days
 
-    def __init__(self, token, user_id):
+    def __init__(self, token, user):
         self.token = token
-        self.expiration = datetime.now() + timedelta(days=self.REFRESH_TOKEN_EXPIRATION)
-        self.user_id = user_id
+        self.user = user
 
-    async def encode(self, data):
+    def encode(self, data):
         try:
             return jwt.encode(data, secret_key, algorithm)
         except Exception as e:
             raise e
 
-    async def decode(self):
+    def decode(self):
         try:
             return jwt.decode(self.token, secret_key, algorithms=[algorithm])
         except Exception as e:
             raise e
 
-    async def verify(self):
+    def verify(self):
         if not self.token:
             raise Unauthorized
 
         try:
-            payload = await self.decode()
+            payload = self.decode()
 
             exp_time = datetime.fromtimestamp(payload.get('exp'))
 
@@ -50,7 +49,9 @@ class RefreshToken(Token):
         except JWTError:
             raise Unauthorized
 
-    async def create(self):
-        data_to_encode = {'user_id': self.user_id,
-                          'exp': self.expiration}
-        return await self.encode(data_to_encode)
+    def create(self):
+        expiration = datetime.now() + timedelta(days=self.REFRESH_TOKEN_EXPIRATION)
+
+        data_to_encode = {'user_id': self.user.user_id,
+                          'exp': expiration}
+        return self.encode(data_to_encode)
