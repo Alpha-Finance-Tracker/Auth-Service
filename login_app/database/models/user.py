@@ -30,12 +30,12 @@ class User(Base):
     async def register(cls, email: str, hashed_password: bytes) -> dict:
         new_user = cls(email=email, password=hashed_password)
 
-        async for session in get_db():  # Use async for to handle async generator
+        async for session in get_db():
             try:
                 session.add(new_user)
                 await session.commit()
                 return {"message": "User registered successfully!"}
             except SQLAlchemyError as e:
-                await session.rollback()  # Roll back in case of error
+                await session.rollback()
                 print(f"An error occurred during register: {e}")
                 return {"error": "Failed to register user"}
