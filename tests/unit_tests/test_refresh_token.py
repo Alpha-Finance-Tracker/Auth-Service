@@ -8,7 +8,7 @@ from tests.mocked_data import *
 @pytest.mark.asyncio
 async def test_verify_refresh_token_when_token_is_absent():
     with pytest.raises(Unauthorized) as e:
-        await RefreshToken(token=None, user_id=None).verify()
+        await RefreshToken(token=None, user=None).verify()
 
     assert isinstance(e.value, Unauthorized)
 
@@ -19,12 +19,12 @@ async def test_verify_refresh_token_when_expired(mocker):
                  mocker.MagicMock(side_effect=JWTError("Token is invalid")))
 
     with pytest.raises(Unauthorized) as e:
-        await RefreshToken(token=invalid_token, user_id=None).verify()
+        await RefreshToken(token=invalid_token, user=None).verify()
 
     assert isinstance(e.value, Unauthorized)
 
 
 @pytest.mark.asyncio
 async def test_verify_refresh_token_when_valid():
-    result = await RefreshToken(token=valid_mock_access_token, user_id=None).verify()
+    result = RefreshToken(token=valid_mock_access_token, user=None).verify()
     assert isinstance(result, dict)

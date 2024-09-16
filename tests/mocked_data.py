@@ -8,3 +8,9 @@ invalid_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIi
 
 
 mock_token_user_info = [('Test@gmail.com','user')]
+
+class MockUserFromDBData:
+    user_id = 1
+    email = 'Test@gmail.com'
+    password = '$2b$12$gK3nxM0G/FayDI8rs6Jm1Obl8UKsmaF4Wa8s5UBNp8hNq7PXJ2VLi'
+    role = 'user'

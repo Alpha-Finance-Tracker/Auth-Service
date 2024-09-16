@@ -9,7 +9,7 @@ from tests.mocked_data import *
 @pytest.mark.asyncio
 async def test_verify_access_token_when_token_is_absent():
     with pytest.raises(Unauthorized) as e:
-        await AccessToken(token=None, user_id=None).verify()
+        await AccessToken(token=None, user=None).verify()
 
     assert isinstance(e.value, Unauthorized)
 
@@ -19,12 +19,12 @@ async def test_verify_access_token_when_expired(mocker):
     mocker.patch('login_app.models.access_token.jwt.decode', mocker.MagicMock(side_effect=JWTError("Token is invalid")))
 
     with pytest.raises(Unauthorized) as e:
-        await AccessToken(token=invalid_token, user_id=None).verify()
+        await AccessToken(token=invalid_token, user=None).verify()
 
     assert isinstance(e.value, Unauthorized)
 
 
 @pytest.mark.asyncio
-async def test_verify_access_token_when_valid():
-    result = await AccessToken(token=valid_mock_access_token, user_id=None).verify()
+def test_verify_access_token_when_valid():
+    result = AccessToken(token=valid_mock_access_token, user=None).verify()
     assert result == valid_mock_access_token

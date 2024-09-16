@@ -1,4 +1,3 @@
-# from login_app.models.user import User
 import bcrypt
 
 from login_app.database.models.user import User
