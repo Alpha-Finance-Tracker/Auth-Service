@@ -1,3 +1,5 @@
+import pdb
+
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
@@ -11,7 +13,7 @@ app.include_router(auth_router)
 
 @pytest.mark.asyncio
 async def test_unsuccessful_registration_flow(mocker):
-    mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=True))
+    mocker.patch('login_app.database.models.user.User.get_user', mocker.AsyncMock(return_value=True))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/register', params=mock_registration)
@@ -21,9 +23,7 @@ async def test_unsuccessful_registration_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_successful_registration_flow(mocker):
-    mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=None))
-    mocker.patch('login_app.models.user.bcrypt.hashpw')
-    mocker.patch('login_app.models.user.update_query')
+    mocker.patch('login_app.database.models.user.User.get_user', mocker.AsyncMock(return_value=None))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/register', params=mock_registration)
@@ -33,7 +33,7 @@ async def test_successful_registration_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_unsuccessful_login_flow(mocker):
-    mocker.patch('login_app.models.user.read_query', mocker.AsyncMock(return_value=None))
+    mocker.patch('login_app.database.models.user.User.get_user', mocker.AsyncMock(return_value=None))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/login', data=mock_login)
@@ -43,15 +43,12 @@ async def test_unsuccessful_login_flow(mocker):
 
 @pytest.mark.asyncio
 async def test_successful_login_flow(mocker):
-    mocker.patch(f'login_app.models.user.read_query',
-                 mocker.AsyncMock(return_value=mock_authentication_db_user_info))
-
-    mocker.patch('login_app.models.user.bcrypt.checkpw', mocker.MagicMock(return_value=True))
-    mocker.patch('login_app.models.access_token.read_query', mocker.AsyncMock(return_value=mock_token_user_info))
+    user = MockUserFromDBData()
+    mocker.patch(f'login_app.api.services.auth_service.AuthService.authenticate',
+                 mocker.AsyncMock(return_value=user))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/login', data=mock_login)
-
         assert response.status_code == 200
 
 
@@ -65,7 +62,9 @@ async def test_unsuccessful_access_token_refresh_flow():
 
 @pytest.mark.asyncio
 async def test_successful_access_token_refresh_flow(mocker):
-    mocker.patch('login_app.models.access_token.read_query', mocker.AsyncMock(return_value=mock_token_user_info))
+    user = MockUserFromDBData()
+    mocker.patch('login_app.database.models.user.User.get_user',
+                 mocker.AsyncMock(return_value=user))
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('/refresh_access_token',
@@ -83,7 +82,10 @@ async def test_unsuccessful_refresh_token_refreshment_flow():
 
 
 @pytest.mark.asyncio
-async def test_successful_refresh_token_refreshment_flow():
+async def test_successful_refresh_token_refreshment_flow(mocker):
+    user = MockUserFromDBData()
+    mocker.patch('login_app.database.models.user.User.get_user',
+                 mocker.AsyncMock(return_value=user))
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.get('refresh_refresh_token',
                                     headers={'Authorization': f'Bearer {valid_mock_refresh_token}'})
