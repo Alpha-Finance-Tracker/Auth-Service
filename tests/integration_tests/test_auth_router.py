@@ -25,6 +25,9 @@ async def test_unsuccessful_registration_flow(mocker):
 async def test_successful_registration_flow(mocker):
     mocker.patch('login_app.database.models.user.User.get_user', mocker.AsyncMock(return_value=None))
 
+    mocker.patch('login_app.database.models.user.User.register',
+                 mocker.AsyncMock(return_value={"message": "User registered successfully!"}))
+
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         response = await client.post('/register', params=mock_registration)
 
